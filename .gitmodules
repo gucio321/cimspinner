@@ -1,0 +1,3 @@
+[submodule "imspinner"]
+	path = imspinner
+	url = https://github.com/dalerank/imspinner
