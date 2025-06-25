@@ -1,3 +1,20 @@
 local t={
-  TextEditor="struct TextEditor"}
+  AltColor="struct AltColor",
+  Angle="struct Angle",
+  AngleMax="struct AngleMax",
+  AngleMin="struct AngleMin",
+  BgColor="struct BgColor",
+  Color="struct Color",
+  Delta="struct Delta",
+  Dots="struct Dots",
+  FloatPtr="struct FloatPtr",
+  MiddleDots="struct MiddleDots",
+  MinThickness="struct MinThickness",
+  Mode="struct Mode",
+  Radius="struct Radius",
+  Reverse="struct Reverse",
+  Speed="struct Speed",
+  SpinnerConfig="struct SpinnerConfig",
+  SpinnerType="struct SpinnerType",
+  Thickness="struct Thickness"}
  return t
