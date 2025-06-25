@@ -4,11 +4,9 @@
 #define CIMSPINNER_INCLUDED
 
 #include "cimgui.h"
-
-#ifdef CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-
 typedef float* float_ptr;
 
+#ifdef CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 
     static const ImColor white{1.f, 1.f, 1.f, 1.f};
     static const ImColor half_white{1.f, 1.f, 1.f, 0.5f};
