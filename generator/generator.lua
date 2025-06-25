@@ -76,7 +76,7 @@ local cimgui_header =
 --helper functions
 --------------------------------functions for C generation
 --load parser module
-package.path = package.path..";../../cimgui/generator/?.lua"
+--package.path = package.path..";../../cimgui/generator/?.lua"
 local cpp2ffi = require"cpp2ffi"
 local read_data = cpp2ffi.read_data
 local save_data = cpp2ffi.save_data
@@ -155,7 +155,8 @@ end
 --generation
 print("------------------generation with "..COMPILER.."------------------------")
 local modulename = "cimspinner"
-local parser1 = parseImGuiHeader([[../imspinner/imspinner.h]], {[[TextEditor]]}, modulename)
+local parser1 = parseImGuiHeader([[../imspinner/imspinner.h]], {[[imspinner]]}, modulename)
+print("- parsed header (done)")
 --local parser1 = parseImGuiHeader([[../cimCTE.h]],{[[cimCTE]]})
 parser1:do_parse()
 
