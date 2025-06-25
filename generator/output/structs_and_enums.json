@@ -1,312 +1,113 @@
 {
   "enums": {
-    "EmphasisState": [
+    "LanguageDefinitionId": [
       {
         "calc_value": 0,
-        "name": "NONE",
+        "name": "None",
         "value": "0"
       },
       {
         "calc_value": 1,
-        "name": "LEFT",
+        "name": "Cpp",
         "value": "1"
       },
       {
         "calc_value": 2,
-        "name": "MIDDLE",
+        "name": "C",
         "value": "2"
       },
       {
         "calc_value": 3,
-        "name": "RIGHT",
-        "value": "3"
-      }
-    ],
-    "LinkState": [
-      {
-        "calc_value": 0,
-        "name": "NO_LINK",
-        "value": "0"
-      },
-      {
-        "calc_value": 1,
-        "name": "HAS_SQUARE_BRACKET_OPEN",
-        "value": "1"
-      },
-      {
-        "calc_value": 2,
-        "name": "HAS_SQUARE_BRACKETS",
-        "value": "2"
-      },
-      {
-        "calc_value": 3,
-        "name": "HAS_SQUARE_BRACKETS_ROUND_BRACKET_OPEN",
-        "value": "3"
-      }
-    ],
-    "MarkdownFormatType": [
-      {
-        "calc_value": 0,
-        "name": "NORMAL_TEXT",
-        "value": "0"
-      },
-      {
-        "calc_value": 1,
-        "name": "HEADING",
-        "value": "1"
-      },
-      {
-        "calc_value": 2,
-        "name": "UNORDERED_LIST",
-        "value": "2"
-      },
-      {
-        "calc_value": 3,
-        "name": "LINK",
+        "name": "Cs",
         "value": "3"
       },
       {
         "calc_value": 4,
-        "name": "EMPHASIS",
+        "name": "Python",
         "value": "4"
+      },
+      {
+        "calc_value": 5,
+        "name": "Lua",
+        "value": "5"
+      },
+      {
+        "calc_value": 6,
+        "name": "Json",
+        "value": "6"
+      },
+      {
+        "calc_value": 7,
+        "name": "Sql",
+        "value": "7"
+      },
+      {
+        "calc_value": 8,
+        "name": "AngelScript",
+        "value": "8"
+      },
+      {
+        "calc_value": 9,
+        "name": "Glsl",
+        "value": "9"
+      },
+      {
+        "calc_value": 10,
+        "name": "Hlsl",
+        "value": "10"
+      }
+    ],
+    "PaletteId": [
+      {
+        "calc_value": 0,
+        "name": "Dark",
+        "value": "0"
+      },
+      {
+        "calc_value": 1,
+        "name": "Light",
+        "value": "1"
+      },
+      {
+        "calc_value": 2,
+        "name": "Mariana",
+        "value": "2"
+      },
+      {
+        "calc_value": 3,
+        "name": "RetroBlue",
+        "value": "3"
+      }
+    ],
+    "SetViewAtLineMode": [
+      {
+        "calc_value": 0,
+        "name": "FirstVisibleLine",
+        "value": "0"
+      },
+      {
+        "calc_value": 1,
+        "name": "Centered",
+        "value": "1"
+      },
+      {
+        "calc_value": 2,
+        "name": "LastVisibleLine",
+        "value": "2"
       }
     ]
   },
   "enumtypes": [],
   "locations": {
-    "Emphasis": "imgui_markdown:449",
-    "EmphasisState": "imgui_markdown:450",
-    "Line": "imgui_markdown:413",
-    "Link": "imgui_markdown:435",
-    "LinkState": "imgui_markdown:436",
-    "MarkdownConfig": "imgui_markdown:317",
-    "MarkdownFormatInfo": "imgui_markdown:279",
-    "MarkdownFormatType": "imgui_markdown:270",
-    "MarkdownHeadingFormat": "imgui_markdown:307",
-    "MarkdownImageData": "imgui_markdown:258",
-    "MarkdownLinkCallbackData": "imgui_markdown:242",
-    "MarkdownTooltipCallbackData": "imgui_markdown:252",
-    "TextBlock": "imgui_markdown:426",
-    "TextRegion": "imgui_markdown:345"
+    "LanguageDefinitionId": "TextEditor:28",
+    "PaletteId": "TextEditor:24",
+    "SetViewAtLineMode": "TextEditor:32",
+    "TextEditor": "TextEditor:16"
+  },
+  "nonPOD": {
+    "TextEditor": true
   },
   "structs": {
-    "Emphasis": [
-      {
-        "name": "state",
-        "type": "EmphasisState"
-      },
-      {
-        "name": "text",
-        "type": "TextBlock"
-      },
-      {
-        "name": "sym",
-        "type": "char"
-      }
-    ],
-    "Line": [
-      {
-        "name": "isHeading",
-        "type": "bool"
-      },
-      {
-        "name": "isEmphasis",
-        "type": "bool"
-      },
-      {
-        "name": "isUnorderedListStart",
-        "type": "bool"
-      },
-      {
-        "name": "isLeadingSpace",
-        "type": "bool"
-      },
-      {
-        "name": "leadSpaceCount",
-        "type": "int"
-      },
-      {
-        "name": "headingCount",
-        "type": "int"
-      },
-      {
-        "name": "emphasisCount",
-        "type": "int"
-      },
-      {
-        "name": "lineStart",
-        "type": "int"
-      },
-      {
-        "name": "lineEnd",
-        "type": "int"
-      },
-      {
-        "name": "lastRenderPosition",
-        "type": "int"
-      }
-    ],
-    "Link": [
-      {
-        "name": "state",
-        "type": "LinkState"
-      },
-      {
-        "name": "text",
-        "type": "TextBlock"
-      },
-      {
-        "name": "url",
-        "type": "TextBlock"
-      },
-      {
-        "name": "isImage",
-        "type": "bool"
-      },
-      {
-        "name": "num_brackets_open",
-        "type": "int"
-      }
-    ],
-    "MarkdownConfig": [
-      {
-        "name": "linkCallback",
-        "type": "MarkdownLinkCallback*"
-      },
-      {
-        "name": "tooltipCallback",
-        "type": "MarkdownTooltipCallback*"
-      },
-      {
-        "name": "imageCallback",
-        "type": "MarkdownImageCallback*"
-      },
-      {
-        "name": "linkIcon",
-        "type": "const char*"
-      },
-      {
-        "name": "headingFormats[NUMHEADINGS]",
-        "size": 3,
-        "type": "MarkdownHeadingFormat"
-      },
-      {
-        "name": "userData",
-        "type": "void*"
-      },
-      {
-        "name": "formatCallback",
-        "type": "MarkdownFormalCallback*"
-      }
-    ],
-    "MarkdownFormatInfo": [
-      {
-        "name": "type",
-        "type": "MarkdownFormatType"
-      },
-      {
-        "name": "level",
-        "type": "int32_t"
-      },
-      {
-        "name": "itemHovered",
-        "type": "bool"
-      },
-      {
-        "name": "config",
-        "type": "const MarkdownConfig*"
-      }
-    ],
-    "MarkdownHeadingFormat": [
-      {
-        "name": "font",
-        "type": "ImFont*"
-      },
-      {
-        "name": "separator",
-        "type": "bool"
-      }
-    ],
-    "MarkdownImageData": [
-      {
-        "name": "isValid",
-        "type": "bool"
-      },
-      {
-        "name": "useLinkCallback",
-        "type": "bool"
-      },
-      {
-        "name": "user_texture_id",
-        "type": "ImTextureID"
-      },
-      {
-        "name": "size",
-        "type": "ImVec2"
-      },
-      {
-        "name": "uv0",
-        "type": "ImVec2"
-      },
-      {
-        "name": "uv1",
-        "type": "ImVec2"
-      },
-      {
-        "name": "tint_col",
-        "type": "ImVec4"
-      },
-      {
-        "name": "border_col",
-        "type": "ImVec4"
-      }
-    ],
-    "MarkdownLinkCallbackData": [
-      {
-        "name": "text",
-        "type": "const char*"
-      },
-      {
-        "name": "textLength",
-        "type": "int"
-      },
-      {
-        "name": "link",
-        "type": "const char*"
-      },
-      {
-        "name": "linkLength",
-        "type": "int"
-      },
-      {
-        "name": "userData",
-        "type": "void*"
-      },
-      {
-        "name": "isImage",
-        "type": "bool"
-      }
-    ],
-    "MarkdownTooltipCallbackData": [
-      {
-        "name": "linkData",
-        "type": "MarkdownLinkCallbackData"
-      },
-      {
-        "name": "linkIcon",
-        "type": "const char*"
-      }
-    ],
-    "TextBlock": [
-      {
-        "name": "start",
-        "type": "int"
-      },
-      {
-        "name": "stop",
-        "type": "int"
-      }
-    ],
-    "TextRegion": []
+    "TextEditor": []
   }
 }

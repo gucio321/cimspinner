@@ -1,704 +1,309 @@
 
-namespace ImGui
+class TextEditor
 {
-    struct Link;
-    struct MarkdownConfig;
-    struct MarkdownLinkCallbackData
-    {
-        const char* text;
-        int textLength;
-        const char* link;
-        int linkLength;
-        void* userData;
-        bool isImage;
-    };
-    struct MarkdownTooltipCallbackData
-    {
-        MarkdownLinkCallbackData linkData;
-        const char* linkIcon;
-    };
-    struct MarkdownImageData
-    {
-        bool isValid = false;
-        bool useLinkCallback = false;
-        ImTextureID user_texture_id = 0;
-        ImVec2 size = ImVec2( 100.0f, 100.0f );
-        ImVec2 uv0 = ImVec2( 0, 0 );
-        ImVec2 uv1 = ImVec2( 1, 1 );
-        ImVec4 tint_col = ImVec4( 1, 1, 1, 1 );
-        ImVec4 border_col = ImVec4( 0, 0, 0, 0 );
-    };
-    enum class MarkdownFormatType
-    {
-         NORMAL_TEXT,
-         HEADING,
-         UNORDERED_LIST,
-         LINK,
-         EMPHASIS,
-    };
-    struct MarkdownFormatInfo
-    {
-        MarkdownFormatType type = MarkdownFormatType::NORMAL_TEXT;
-        int32_t level = 0;
-        bool itemHovered = false;
-        const MarkdownConfig* config =                                          ((void *)0)                                             ;
-    };
-    typedef void MarkdownLinkCallback( MarkdownLinkCallbackData data );
-    typedef void MarkdownTooltipCallback( MarkdownTooltipCallbackData data );
-    inline void defaultMarkdownTooltipCallback( MarkdownTooltipCallbackData data_ )
-    {
-        if( data_.linkData.isImage )
-        {
-            ImGui::SetTooltip( "%.*s", data_.linkData.linkLength, data_.linkData.link );
-        }
-        else
-        {
-            ImGui::SetTooltip( "%s Open in browser\n%.*s", data_.linkIcon, data_.linkData.linkLength, data_.linkData.link );
-        }
-    }
-    typedef MarkdownImageData MarkdownImageCallback( MarkdownLinkCallbackData data );
-    typedef void MarkdownFormalCallback( const MarkdownFormatInfo& markdownFormatInfo_, bool start_ );
-    inline void defaultMarkdownFormatCallback( const MarkdownFormatInfo& markdownFormatInfo_, bool start_ );
-    struct MarkdownHeadingFormat
-    {
-        ImFont* font;
-        bool separator;
-    };
-    struct MarkdownConfig
-    {
-        static const int NUMHEADINGS = 3;
-        MarkdownLinkCallback* linkCallback =                                               ((void *)0)                                                  ;
-        MarkdownTooltipCallback* tooltipCallback =                                                   ((void *)0)                                                      ;
-        MarkdownImageCallback* imageCallback =                                                ((void *)0)                                                   ;
-        const char* linkIcon = "";
-        MarkdownHeadingFormat headingFormats[ NUMHEADINGS ] = { {                                                                    ((void *)0)                                                                       , true }, {                                                                                    ((void *)0)                                                                                       , true }, {                                                                                                    ((void *)0)                                                                                                       , true } };
-        void* userData =                                           ((void *)0)                                              ;
-        MarkdownFormalCallback* formatCallback = defaultMarkdownFormatCallback;
-    };
-    inline void Markdown( const char* markdown_, size_t markdownLength_, const MarkdownConfig& mdConfig_ );
-    struct TextRegion;
-    struct Line;
-    inline void UnderLine( ImColor col_ );
-    inline void RenderLine( const char* markdown_, Line& line_, TextRegion& textRegion_, const MarkdownConfig& mdConfig_ );
-    struct TextRegion
-    {
-        TextRegion() : indentX( 0.0f )
-        {
-        }
-        ~TextRegion()
-        {
-            ResetIndent();
-        }
-        void RenderTextWrapped( const char* text_, const char* text_end_, bool bIndentToHere_ = false )
-        {
-            float scale = ImGui::GetIO().FontGlobalScale;
-            float widthLeft = GetContentRegionAvail().x;
-            const char* endLine = ImGui::GetFont()->CalcWordWrapPositionA( scale, text_, text_end_, widthLeft );
-            ImGui::TextUnformatted( text_, endLine );
-            if( bIndentToHere_ )
-            {
-                float indentNeeded = GetContentRegionAvail().x - widthLeft;
-                if( indentNeeded )
-                {
-                    ImGui::Indent( indentNeeded );
-                    indentX += indentNeeded;
-                }
-            }
-            widthLeft = GetContentRegionAvail().x;
-            while( endLine < text_end_ )
-            {
-                text_ = endLine;
-                if( *text_ == ' ' ) { ++text_; }
-                endLine = ImGui::GetFont()->CalcWordWrapPositionA( scale, text_, text_end_, widthLeft );
-                if( text_ == endLine )
-                {
-                    endLine++;
-                }
-                ImGui::TextUnformatted( text_, endLine );
-            }
-        }
-        void RenderListTextWrapped( const char* text_, const char* text_end_ )
-        {
-            ImGui::Bullet();
-            ImGui::SameLine();
-            RenderTextWrapped( text_, text_end_, true );
-        }
-        bool RenderLinkText( const char* text_, const char* text_end_, const Link& link_,
-            const char* markdown_, const MarkdownConfig& mdConfig_, const char** linkHoverStart_ );
-        void RenderLinkTextWrapped( const char* text_, const char* text_end_, const Link& link_,
-            const char* markdown_, const MarkdownConfig& mdConfig_, const char** linkHoverStart_, bool bIndentToHere_ = false );
-        void ResetIndent()
-        {
-            if( indentX > 0.0f )
-            {
-                ImGui::Unindent( indentX );
-            }
-            indentX = 0.0f;
-        }
-    private:
-        float indentX;
-    };
-    struct Line {
-        bool isHeading = false;
-        bool isEmphasis = false;
-        bool isUnorderedListStart = false;
-        bool isLeadingSpace = true;
-        int leadSpaceCount = 0;
-        int headingCount = 0;
-        int emphasisCount = 0;
-        int lineStart = 0;
-        int lineEnd = 0;
-        int lastRenderPosition = 0;
-    };
-    struct TextBlock {
-        int start = 0;
-        int stop = 0;
-        int size() const
-        {
-            return stop - start;
-        }
-    };
-    struct Link {
-        enum LinkState {
-            NO_LINK,
-            HAS_SQUARE_BRACKET_OPEN,
-            HAS_SQUARE_BRACKETS,
-            HAS_SQUARE_BRACKETS_ROUND_BRACKET_OPEN,
-        };
-        LinkState state = NO_LINK;
-        TextBlock text;
-        TextBlock url;
-        bool isImage = false;
-        int num_brackets_open = 0;
-    };
- struct Emphasis {
-  enum EmphasisState {
-   NONE,
-   LEFT,
-   MIDDLE,
-   RIGHT,
-  };
-        EmphasisState state = NONE;
-        TextBlock text;
-        char sym;
+public:
+ enum class PaletteIndex
+ {
+  Default,
+  Keyword,
+  Number,
+  String,
+  CharLiteral,
+  Punctuation,
+  Preprocessor,
+  Identifier,
+  KnownIdentifier,
+  PreprocIdentifier,
+  Comment,
+  MultiLineComment,
+  Background,
+  Cursor,
+  Selection,
+  ErrorMarker,
+  Breakpoint,
+  LineNumber,
+  CurrentLineFill,
+  CurrentLineFillInactive,
+  CurrentLineEdge,
+  Max
  };
-    inline void UnderLine( ImColor col_ )
-    {
-        ImVec2 min = ImGui::GetItemRectMin();
-        ImVec2 max = ImGui::GetItemRectMax();
-        min.y = max.y;
-        ImGui::GetWindowDrawList()->AddLine( min, max, col_, 1.0f );
-    }
-    inline void RenderLine( const char* markdown_, Line& line_, TextRegion& textRegion_, const MarkdownConfig& mdConfig_ )
-    {
-        int indentStart = 0;
-        if( line_.isUnorderedListStart )
-        {
-            indentStart = 1;
-        }
-        for( int j = indentStart; j < line_.leadSpaceCount / 2; ++j )
-        {
-            ImGui::Indent();
-        }
-        MarkdownFormatInfo formatInfo;
-        formatInfo.config = &mdConfig_;
-        int textStart = line_.lastRenderPosition + 1;
-        int textSize = line_.lineEnd - textStart;
-        if( line_.isUnorderedListStart )
-        {
-            formatInfo.type = MarkdownFormatType::UNORDERED_LIST;
-            mdConfig_.formatCallback( formatInfo, true );
-            const char* text = markdown_ + textStart + 1;
-            textRegion_.RenderListTextWrapped( text, text + textSize - 1 );
-        }
-        else if( line_.isHeading )
-        {
-            formatInfo.level = line_.headingCount;
-            formatInfo.type = MarkdownFormatType::HEADING;
-            mdConfig_.formatCallback( formatInfo, true );
-            const char* text = markdown_ + textStart + 1;
-            textRegion_.RenderTextWrapped( text, text + textSize - 1 );
-        }
-  else if( line_.isEmphasis )
+ enum class SelectionMode
+ {
+  Normal,
+  Word,
+  Line
+ };
+ struct Breakpoint
+ {
+  int mLine;
+  bool mEnabled;
+  std::string mCondition;
+  Breakpoint()
+   : mLine(-1)
+   , mEnabled(false)
+  {}
+ };
+ struct Coordinates
+ {
+  int mLine, mColumn;
+  Coordinates() : mLine(0), mColumn(0) {}
+  Coordinates(int aLine, int aColumn) : mLine(aLine), mColumn(aColumn)
   {
-   formatInfo.level = line_.emphasisCount;
-   formatInfo.type = MarkdownFormatType::EMPHASIS;
-   mdConfig_.formatCallback(formatInfo, true);
-   const char* text = markdown_ + textStart;
-   textRegion_.RenderTextWrapped(text, text + textSize);
+  (static_cast <bool> (  aLine >= 0  ) ? void (0) : __assert_fail (  "aLine >= 0"  , __builtin_FILE (), __builtin_LINE (), __extension__ __PRETTY_FUNCTION__))                    ;
+  (static_cast <bool> (  aColumn >= 0  ) ? void (0) : __assert_fail (  "aColumn >= 0"  , __builtin_FILE (), __builtin_LINE (), __extension__ __PRETTY_FUNCTION__))                      ;
   }
-        else
-        {
-            formatInfo.type = MarkdownFormatType::NORMAL_TEXT;
-            mdConfig_.formatCallback( formatInfo, true );
-            const char* text = markdown_ + textStart;
-            textRegion_.RenderTextWrapped( text, text + textSize );
-        }
-        mdConfig_.formatCallback( formatInfo, false );
-        for( int j = indentStart; j < line_.leadSpaceCount / 2; ++j )
-        {
-            ImGui::Unindent();
-        }
-    }
-    inline void Markdown( const char* markdown_, size_t markdownLength_, const MarkdownConfig& mdConfig_ )
-    {
-        static const char* linkHoverStart =                                            ((void *)0)                                               ;
-        ImGuiStyle& style = ImGui::GetStyle();
-        Line line;
-        Link link;
-        Emphasis em;
-        TextRegion textRegion;
-        char c = 0;
-        for( int i=0; i < (int)markdownLength_; ++i )
-        {
-            c = markdown_[i];
-            if( c == 0 ) { break; }
-            if( line.isLeadingSpace )
-            {
-                if( c == ' ' )
-                {
-                    ++line.leadSpaceCount;
-                    continue;
-                }
-                else
-                {
-                    line.isLeadingSpace = false;
-                    line.lastRenderPosition = i - 1;
-                    if(( c == '*' ) && ( line.leadSpaceCount >= 2 ))
-                    {
-                        if( ( (int)markdownLength_ > i + 1 ) && ( markdown_[ i + 1 ] == ' ' ) )
-                        {
-                            line.isUnorderedListStart = true;
-                            ++i;
-                            ++line.lastRenderPosition;
-                        }
-                    }
-                    else if( c == '#' )
-                    {
-                        line.headingCount++;
-                        bool bContinueChecking = true;
-                        int j = i;
-                        while( ++j < (int)markdownLength_ && bContinueChecking )
-                        {
-                            c = markdown_[j];
-                            switch( c )
-                            {
-                            case '#':
-                                line.headingCount++;
-                                break;
-                            case ' ':
-                                line.lastRenderPosition = j - 1;
-                                i = j;
-                                line.isHeading = true;
-                                bContinueChecking = false;
-                                break;
-                            default:
-                                line.isHeading = false;
-                                bContinueChecking = false;
-                                break;
-                            }
-                        }
-                        if( line.isHeading )
-                        {
-                            em = Emphasis();
-                            continue;
-                        }
-                    }
-                }
-            }
-            switch( link.state )
-            {
-            case Link::NO_LINK:
-                if( c == '[' && !line.isHeading )
-                {
-                    link.state = Link::HAS_SQUARE_BRACKET_OPEN;
-                    link.text.start = i + 1;
-                    if( i > 0 && markdown_[i - 1] == '!' )
-                    {
-                        link.isImage = true;
-                    }
-                }
-                break;
-            case Link::HAS_SQUARE_BRACKET_OPEN:
-                if( c == ']' )
-                {
-                    link.state = Link::HAS_SQUARE_BRACKETS;
-                    link.text.stop = i;
-                }
-                break;
-            case Link::HAS_SQUARE_BRACKETS:
-                if( c == '(' )
-                {
-                    link.state = Link::HAS_SQUARE_BRACKETS_ROUND_BRACKET_OPEN;
-                    link.url.start = i + 1;
-                    link.num_brackets_open = 1;
-                }
-                break;
-            case Link::HAS_SQUARE_BRACKETS_ROUND_BRACKET_OPEN:
-                if( c == '(' )
-                {
-                    ++link.num_brackets_open;
-                }
-                else if( c == ')' )
-                {
-                    --link.num_brackets_open;
-                }
-                if( link.num_brackets_open == 0 )
-                {
-                    em = Emphasis();
-                    line.lineEnd = link.text.start - ( link.isImage ? 2 : 1 );
-                    RenderLine( markdown_, line, textRegion, mdConfig_ );
-                    line.leadSpaceCount = 0;
-                    link.url.stop = i;
-                    line.isUnorderedListStart = false;
-                    ImGui::SameLine( 0.0f, 0.0f );
-                    if( link.isImage )
-                    {
-                        bool drawnImage = false;
-                        bool useLinkCallback = false;
-                        if( mdConfig_.imageCallback )
-                        {
-                            MarkdownImageData imageData = mdConfig_.imageCallback( { markdown_ + link.text.start, link.text.size(), markdown_ + link.url.start, link.url.size(), mdConfig_.userData, true } );
-                            useLinkCallback = imageData.useLinkCallback;
-                            if( imageData.isValid )
-                            {
-                                ImGui::Image( imageData.user_texture_id, imageData.size, imageData.uv0, imageData.uv1, imageData.tint_col, imageData.border_col );
-                                drawnImage = true;
-                            }
-                        }
-                        if( !drawnImage )
-                        {
-                            ImGui::Text( "( Image %.*s not loaded )", link.url.size(), markdown_ + link.url.start );
-                        }
-                        if( ImGui::IsItemHovered() )
-                        {
-                            if( ImGui::IsMouseReleased( 0 ) && mdConfig_.linkCallback && useLinkCallback )
-                            {
-                                mdConfig_.linkCallback( { markdown_ + link.text.start, link.text.size(), markdown_ + link.url.start, link.url.size(), mdConfig_.userData, true } );
-                            }
-                            if( link.text.size() > 0 && mdConfig_.tooltipCallback )
-                            {
-                                mdConfig_.tooltipCallback( { { markdown_ + link.text.start, link.text.size(), markdown_ + link.url.start, link.url.size(), mdConfig_.userData, true }, mdConfig_.linkIcon } );
-                            }
-                        }
-                    }
-                    else
-                    {
-                        textRegion.RenderLinkTextWrapped( markdown_ + link.text.start, markdown_ + link.text.start + link.text.size(), link, markdown_, mdConfig_, &linkHoverStart, false );
-                    }
-                    ImGui::SameLine( 0.0f, 0.0f );
-                    link = Link();
-                    line.lastRenderPosition = i;
-                    break;
-                }
-            }
-   switch( em.state )
-   {
-   case Emphasis::NONE:
-    if( link.state == Link::NO_LINK && !line.isHeading )
-                {
-                    int next = i + 1;
-                    int prev = i - 1;
-     if( ( c == '*' || c == '_' )
-                        && ( i == line.lineStart
-                            || markdown_[ prev ] == ' '
-                            || markdown_[ prev ] == '\t' )
-                        && (int)markdownLength_ > next
-                        && markdown_[ next ] != ' '
-                        && markdown_[ next ] != '\n'
-                        && markdown_[ next ] != '\t' )
-                    {
-      em.state = Emphasis::LEFT;
-      em.sym = c;
-                        em.text.start = i;
-      line.emphasisCount = 1;
-      continue;
-     }
-    }
-    break;
-   case Emphasis::LEFT:
-    if( em.sym == c )
-                {
-     ++line.emphasisCount;
-     continue;
-    }
-                else
-                {
-     em.text.start = i;
-     em.state = Emphasis::MIDDLE;
-    }
-    break;
-   case Emphasis::MIDDLE:
-    if( em.sym == c )
-                {
-     em.state = Emphasis::RIGHT;
-     em.text.stop = i;
-    }
-                else
-                {
-                    break;
-                }
-   case Emphasis::RIGHT:
-    if( em.sym == c )
-                {
-     if( line.emphasisCount < 3 && ( i - em.text.stop + 1 == line.emphasisCount ) )
-                    {
-                        int lineEnd = em.text.start - line.emphasisCount;
-                        if( lineEnd > line.lineStart )
-                        {
-                            line.lineEnd = lineEnd;
-                            RenderLine( markdown_, line, textRegion, mdConfig_ );
-          ImGui::SameLine( 0.0f, 0.0f );
-                            line.isUnorderedListStart = false;
-                            line.leadSpaceCount = 0;
-                        }
-      line.isEmphasis = true;
-      line.lastRenderPosition = em.text.start - 1;
-                        line.lineStart = em.text.start;
-         line.lineEnd = em.text.stop;
-         RenderLine( markdown_, line, textRegion, mdConfig_ );
-         ImGui::SameLine( 0.0f, 0.0f );
-         line.isEmphasis = false;
-         line.lastRenderPosition = i;
-         em = Emphasis();
-                    }
-                    continue;
-    }
-                else
-                {
-                    em.state = Emphasis::NONE;
-                    int start = em.text.start - line.emphasisCount;
-                    if( start < line.lineStart )
-                    {
-                        line.lineEnd = line.lineStart;
-                        line.lineStart = start;
-                        line.lastRenderPosition = start - 1;
-                        RenderLine(markdown_, line, textRegion, mdConfig_);
-                        line.lineStart = line.lineEnd;
-                        line.lastRenderPosition = line.lineStart - 1;
-                    }
-                }
-    break;
-   }
-            if( c == '\n' )
-            {
-                line.lineEnd = i;
-                if( em.state == Emphasis::MIDDLE && line.emphasisCount >=3 &&
-                    ( line.lineStart + line.emphasisCount ) == i )
-                {
-                    ImGui::Separator();
-                }
-                else
-                {
-                    RenderLine( markdown_, line, textRegion, mdConfig_ );
-                }
-    line = Line();
-                em = Emphasis();
-                line.lineStart = i + 1;
-                line.lastRenderPosition = i;
-                textRegion.ResetIndent();
-                link = Link();
-            }
-        }
-        if( em.state == Emphasis::LEFT && line.emphasisCount >= 3 )
-        {
-            ImGui::Separator();
-        }
-        else
-        {
-            if( markdownLength_ && line.lineStart < (int)markdownLength_ && markdown_[ line.lineStart ] != 0 )
-            {
-                line.lineEnd = (int)markdownLength_;
-                if( 0 == markdown_[ line.lineEnd - 1 ] )
-                {
-                    --line.lineEnd;
-                }
-                RenderLine( markdown_, line, textRegion, mdConfig_ );
-            }
-        }
-    }
-    inline bool TextRegion::RenderLinkText( const char* text_, const char* text_end_, const Link& link_,
-        const char* markdown_, const MarkdownConfig& mdConfig_, const char** linkHoverStart_ )
-    {
-        MarkdownFormatInfo formatInfo;
-        formatInfo.config = &mdConfig_;
-        formatInfo.type = MarkdownFormatType::LINK;
-        mdConfig_.formatCallback( formatInfo, true );
-        ImGui::PushTextWrapPos( -1.0f );
-        ImGui::TextUnformatted( text_, text_end_ );
-        ImGui::PopTextWrapPos();
-        bool bThisItemHovered = ImGui::IsItemHovered();
-        if(bThisItemHovered)
-        {
-            *linkHoverStart_ = markdown_ + link_.text.start;
-        }
-        bool bHovered = bThisItemHovered || ( *linkHoverStart_ == ( markdown_ + link_.text.start ) );
-        formatInfo.itemHovered = bHovered;
-        mdConfig_.formatCallback( formatInfo, false );
-        if(bHovered)
-        {
-            if( ImGui::IsMouseReleased( 0 ) && mdConfig_.linkCallback )
-            {
-                mdConfig_.linkCallback( { markdown_ + link_.text.start, link_.text.size(), markdown_ + link_.url.start, link_.url.size(), mdConfig_.userData, false } );
-            }
-            if( mdConfig_.tooltipCallback )
-            {
-                mdConfig_.tooltipCallback( { { markdown_ + link_.text.start, link_.text.size(), markdown_ + link_.url.start, link_.url.size(), mdConfig_.userData, false }, mdConfig_.linkIcon } );
-            }
-        }
-        return bThisItemHovered;
-    }
-    inline bool IsCharInsideWord( char c_ )
-    {
-        return c_ != ' ' && c_ != '.' && c_ != ',' && c_ != ';' && c_ != '!' && c_ != '?' && c_ != '\"';
-    }
-    inline void TextRegion::RenderLinkTextWrapped( const char* text_, const char* text_end_, const Link& link_,
-        const char* markdown_, const MarkdownConfig& mdConfig_, const char** linkHoverStart_, bool bIndentToHere_ )
-        {
-            float scale = ImGui::GetIO().FontGlobalScale;
-            float widthLeft = GetContentRegionAvail().x;
-            const char* endLine = text_;
-            if( widthLeft > 0.0f )
-            {
-                endLine = ImGui::GetFont()->CalcWordWrapPositionA( scale, text_, text_end_, widthLeft );
-            }
-            if( endLine > text_ && endLine < text_end_ )
-            {
-                if( IsCharInsideWord( *endLine ) )
-                {
-                    float widthNextLine = GetContentRegionMax().x;
-                    const char* endNextLine = ImGui::GetFont()->CalcWordWrapPositionA( scale, text_, text_end_, widthNextLine );
-                    if( endNextLine == text_end_ || ( endNextLine <= text_end_ && !IsCharInsideWord( *endNextLine ) ) )
-                    {
-                        endLine = text_;
-                    }
-                }
-            }
-            bool bHovered = RenderLinkText( text_, endLine, link_, markdown_, mdConfig_, linkHoverStart_ );
-            if( bIndentToHere_ )
-            {
-                float indentNeeded = GetContentRegionAvail().x - widthLeft;
-                if( indentNeeded )
-                {
-                    ImGui::Indent( indentNeeded );
-                    indentX += indentNeeded;
-                }
-            }
-            widthLeft = GetContentRegionAvail().x;
-            while( endLine < text_end_ )
-            {
-                text_ = endLine;
-                if( *text_ == ' ' ) { ++text_; }
-                endLine = ImGui::GetFont()->CalcWordWrapPositionA( scale, text_, text_end_, widthLeft );
-                if( text_ == endLine )
-                {
-                    endLine++;
-                }
-                bool bThisLineHovered = RenderLinkText( text_, endLine, link_, markdown_, mdConfig_, linkHoverStart_ );
-                bHovered = bHovered || bThisLineHovered;
-            }
-            if( !bHovered && *linkHoverStart_ == markdown_ + link_.text.start )
-            {
-                *linkHoverStart_ =                                   ((void *)0)                                      ;
-            }
-        }
-    inline void defaultMarkdownFormatCallback( const MarkdownFormatInfo& markdownFormatInfo_, bool start_ )
-    {
-        switch( markdownFormatInfo_.type )
-        {
-        case MarkdownFormatType::NORMAL_TEXT:
-            break;
-  case MarkdownFormatType::EMPHASIS:
-        {
-            MarkdownHeadingFormat fmt;
-            if( markdownFormatInfo_.level == 1 )
-            {
-        if( start_ )
-       {
-                    ImGui::PushStyleColor( ImGuiCol_Text, ImGui::GetStyle().Colors[ ImGuiCol_TextDisabled ] );
-       }
-                else
-       {
-                    ImGui::PopStyleColor();
-       }
-            }
-            else
-            {
-                fmt = markdownFormatInfo_.config->headingFormats[ MarkdownConfig::NUMHEADINGS - 1 ];
-       if( start_ )
-       {
-        if( fmt.font )
-        {
-         ImGui::PushFont( fmt.font );
-        }
-       }
-                else
-       {
-        if( fmt.font )
-        {
-         ImGui::PopFont();
-        }
-       }
-            }
-            break;
-        }
-        case MarkdownFormatType::HEADING:
-        {
-            MarkdownHeadingFormat fmt;
-            if( markdownFormatInfo_.level > MarkdownConfig::NUMHEADINGS )
-            {
-                fmt = markdownFormatInfo_.config->headingFormats[ MarkdownConfig::NUMHEADINGS - 1 ];
-            }
-            else
-            {
-                fmt = markdownFormatInfo_.config->headingFormats[ markdownFormatInfo_.level - 1 ];
-            }
-            if( start_ )
-            {
-                if( fmt.font )
-                {
-                    ImGui::PushFont( fmt.font );
-                }
-                ImGui::NewLine();
-            }
-            else
-            {
-                if( fmt.separator )
-                {
-                    ImGui::Separator();
-                    ImGui::NewLine();
-                }
-                else
-                {
-                    ImGui::NewLine();
-                }
-                if( fmt.font )
-                {
-                    ImGui::PopFont();
-                }
-            }
-            break;
-        }
-        case MarkdownFormatType::UNORDERED_LIST:
-            break;
-        case MarkdownFormatType::LINK:
-            if( start_ )
-            {
-                ImGui::PushStyleColor( ImGuiCol_Text, ImGui::GetStyle().Colors[ ImGuiCol_ButtonHovered ] );
-            }
-            else
-            {
-                ImGui::PopStyleColor();
-                if( markdownFormatInfo_.itemHovered )
-                {
-                    ImGui::UnderLine( ImGui::GetStyle().Colors[ ImGuiCol_ButtonHovered ] );
-                }
-                else
-                {
-                    ImGui::UnderLine( ImGui::GetStyle().Colors[ ImGuiCol_Button ] );
-                }
-            }
-            break;
-        }
-    }
-}
+  static Coordinates Invalid() { static Coordinates invalid(-1, -1); return invalid; }
+  bool operator ==(const Coordinates& o) const
+  {
+   return
+    mLine == o.mLine &&
+    mColumn == o.mColumn;
+  }
+  bool operator !=(const Coordinates& o) const
+  {
+   return
+    mLine != o.mLine ||
+    mColumn != o.mColumn;
+  }
+  bool operator <(const Coordinates& o) const
+  {
+   if (mLine != o.mLine)
+    return mLine < o.mLine;
+   return mColumn < o.mColumn;
+  }
+  bool operator >(const Coordinates& o) const
+  {
+   if (mLine != o.mLine)
+    return mLine > o.mLine;
+   return mColumn > o.mColumn;
+  }
+  bool operator <=(const Coordinates& o) const
+  {
+   if (mLine != o.mLine)
+    return mLine < o.mLine;
+   return mColumn <= o.mColumn;
+  }
+  bool operator >=(const Coordinates& o) const
+  {
+   if (mLine != o.mLine)
+    return mLine > o.mLine;
+   return mColumn >= o.mColumn;
+  }
+ };
+ struct Identifier
+ {
+  Coordinates mLocation;
+  std::string mDeclaration;
+ };
+ typedef std::string String;
+ typedef std::unordered_map<std::string, Identifier> Identifiers;
+ typedef std::unordered_set<std::string> Keywords;
+ typedef std::map<int, std::string> ErrorMarkers;
+ typedef std::unordered_set<int> Breakpoints;
+ typedef std::array<ImU32, (unsigned)PaletteIndex::Max> Palette;
+ typedef uint8_t Char;
+ struct Glyph
+ {
+  Char mChar;
+  PaletteIndex mColorIndex = PaletteIndex::Default;
+  bool mComment : 1;
+  bool mMultiLineComment : 1;
+  bool mPreprocessor : 1;
+  Glyph(Char aChar, PaletteIndex aColorIndex) : mChar(aChar), mColorIndex(aColorIndex),
+   mComment(false), mMultiLineComment(false), mPreprocessor(false) {}
+ };
+ typedef std::vector<Glyph> Line;
+ typedef std::vector<Line> Lines;
+ struct LanguageDefinition
+ {
+  typedef std::pair<std::string, PaletteIndex> TokenRegexString;
+  typedef std::vector<TokenRegexString> TokenRegexStrings;
+  typedef bool(*TokenizeCallback)(const char * in_begin, const char * in_end, const char *& out_begin, const char *& out_end, PaletteIndex & paletteIndex);
+  std::string mName;
+  Keywords mKeywords;
+  Identifiers mIdentifiers;
+  Identifiers mPreprocIdentifiers;
+  std::string mCommentStart, mCommentEnd, mSingleLineComment;
+  char mPreprocChar;
+  bool mAutoIndentation;
+  TokenizeCallback mTokenize;
+  TokenRegexStrings mTokenRegexStrings;
+  bool mCaseSensitive;
+  LanguageDefinition()
+   : mPreprocChar('#'), mAutoIndentation(true), mTokenize(nullptr), mCaseSensitive(true)
+  {
+  }
+  static const LanguageDefinition& CPlusPlus();
+  static const LanguageDefinition& HLSL();
+  static const LanguageDefinition& GLSL();
+  static const LanguageDefinition& C();
+  static const LanguageDefinition& SQL();
+  static const LanguageDefinition& AngelScript();
+  static const LanguageDefinition& Lua();
+ };
+ TextEditor();
+ ~TextEditor();
+ void SetLanguageDefinition(const LanguageDefinition& aLanguageDef);
+ const LanguageDefinition& GetLanguageDefinition() const { return mLanguageDefinition; }
+ const Palette& GetPalette() const { return mPaletteBase; }
+ void SetPalette(const Palette& aValue);
+ void SetErrorMarkers(const ErrorMarkers& aMarkers) { mErrorMarkers = aMarkers; }
+ void SetBreakpoints(const Breakpoints& aMarkers) { mBreakpoints = aMarkers; }
+ void Render(const char* aTitle, const ImVec2& aSize = ImVec2(), bool aBorder = false);
+ void SetText(const std::string& aText);
+ std::string GetText() const;
+ void SetTextLines(const std::vector<std::string>& aLines);
+ std::vector<std::string> GetTextLines() const;
+ std::string GetSelectedText() const;
+ std::string GetCurrentLineText()const;
+ int GetTotalLines() const { return (int)mLines.size(); }
+ bool IsOverwrite() const { return mOverwrite; }
+ void SetReadOnly(bool aValue);
+ bool IsReadOnly() const { return mReadOnly; }
+ bool IsTextChanged() const { return mTextChanged; }
+ bool IsCursorPositionChanged() const { return mCursorPositionChanged; }
+ bool IsColorizerEnabled() const { return mColorizerEnabled; }
+ void SetColorizerEnable(bool aValue);
+ Coordinates GetCursorPosition() const { return GetActualCursorCoordinates(); }
+ void SetCursorPosition(const Coordinates& aPosition);
+ inline void SetHandleMouseInputs (bool aValue){ mHandleMouseInputs = aValue;}
+ inline bool IsHandleMouseInputsEnabled() const { return mHandleKeyboardInputs; }
+ inline void SetHandleKeyboardInputs (bool aValue){ mHandleKeyboardInputs = aValue;}
+ inline bool IsHandleKeyboardInputsEnabled() const { return mHandleKeyboardInputs; }
+ inline void SetImGuiChildIgnored (bool aValue){ mIgnoreImGuiChild = aValue;}
+ inline bool IsImGuiChildIgnored() const { return mIgnoreImGuiChild; }
+ inline void SetShowWhitespaces(bool aValue) { mShowWhitespaces = aValue; }
+ inline bool IsShowingWhitespaces() const { return mShowWhitespaces; }
+ void SetTabSize(int aValue);
+ inline int GetTabSize() const { return mTabSize; }
+ void InsertText(const std::string& aValue);
+ void InsertText(const char* aValue);
+ void MoveUp(int aAmount = 1, bool aSelect = false);
+ void MoveDown(int aAmount = 1, bool aSelect = false);
+ void MoveLeft(int aAmount = 1, bool aSelect = false, bool aWordMode = false);
+ void MoveRight(int aAmount = 1, bool aSelect = false, bool aWordMode = false);
+ void MoveTop(bool aSelect = false);
+ void MoveBottom(bool aSelect = false);
+ void MoveHome(bool aSelect = false);
+ void MoveEnd(bool aSelect = false);
+ void SetSelectionStart(const Coordinates& aPosition);
+ void SetSelectionEnd(const Coordinates& aPosition);
+ void SetSelection(const Coordinates& aStart, const Coordinates& aEnd, SelectionMode aMode = SelectionMode::Normal);
+ void SelectWordUnderCursor();
+ void SelectAll();
+ bool HasSelection() const;
+ void Copy();
+ void Cut();
+ void Paste();
+ void Delete();
+ bool CanUndo() const;
+ bool CanRedo() const;
+ void Undo(int aSteps = 1);
+ void Redo(int aSteps = 1);
+ static const Palette& GetDarkPalette();
+ static const Palette& GetLightPalette();
+ static const Palette& GetRetroBluePalette();
+private:
+ typedef std::vector<std::pair<std::regex, PaletteIndex>> RegexList;
+ struct EditorState
+ {
+  Coordinates mSelectionStart;
+  Coordinates mSelectionEnd;
+  Coordinates mCursorPosition;
+ };
+ class UndoRecord
+ {
+ public:
+  UndoRecord() {}
+  ~UndoRecord() {}
+  UndoRecord(
+   const std::string& aAdded,
+   const TextEditor::Coordinates aAddedStart,
+   const TextEditor::Coordinates aAddedEnd,
+   const std::string& aRemoved,
+   const TextEditor::Coordinates aRemovedStart,
+   const TextEditor::Coordinates aRemovedEnd,
+   TextEditor::EditorState& aBefore,
+   TextEditor::EditorState& aAfter);
+  void Undo(TextEditor* aEditor);
+  void Redo(TextEditor* aEditor);
+  std::string mAdded;
+  Coordinates mAddedStart;
+  Coordinates mAddedEnd;
+  std::string mRemoved;
+  Coordinates mRemovedStart;
+  Coordinates mRemovedEnd;
+  EditorState mBefore;
+  EditorState mAfter;
+ };
+ typedef std::vector<UndoRecord> UndoBuffer;
+ void ProcessInputs();
+ void Colorize(int aFromLine = 0, int aCount = -1);
+ void ColorizeRange(int aFromLine = 0, int aToLine = 0);
+ void ColorizeInternal();
+ float TextDistanceToLineStart(const Coordinates& aFrom) const;
+ void EnsureCursorVisible();
+ int GetPageSize() const;
+ std::string GetText(const Coordinates& aStart, const Coordinates& aEnd) const;
+ Coordinates GetActualCursorCoordinates() const;
+ Coordinates SanitizeCoordinates(const Coordinates& aValue) const;
+ void Advance(Coordinates& aCoordinates) const;
+ void DeleteRange(const Coordinates& aStart, const Coordinates& aEnd);
+ int InsertTextAt(Coordinates& aWhere, const char* aValue);
+ void AddUndo(UndoRecord& aValue);
+ Coordinates ScreenPosToCoordinates(const ImVec2& aPosition) const;
+ Coordinates FindWordStart(const Coordinates& aFrom) const;
+ Coordinates FindWordEnd(const Coordinates& aFrom) const;
+ Coordinates FindNextWord(const Coordinates& aFrom) const;
+ int GetCharacterIndex(const Coordinates& aCoordinates) const;
+ int GetCharacterColumn(int aLine, int aIndex) const;
+ int GetLineCharacterCount(int aLine) const;
+ int GetLineMaxColumn(int aLine) const;
+ bool IsOnWordBoundary(const Coordinates& aAt) const;
+ void RemoveLine(int aStart, int aEnd);
+ void RemoveLine(int aIndex);
+ Line& InsertLine(int aIndex);
+ void EnterCharacter(ImWchar aChar, bool aShift);
+ void Backspace();
+ void DeleteSelection();
+ std::string GetWordUnderCursor() const;
+ std::string GetWordAt(const Coordinates& aCoords) const;
+ ImU32 GetGlyphColor(const Glyph& aGlyph) const;
+ void HandleKeyboardInputs();
+ void HandleMouseInputs();
+ void Render();
+ float mLineSpacing;
+ Lines mLines;
+ EditorState mState;
+ UndoBuffer mUndoBuffer;
+ int mUndoIndex;
+ int mTabSize;
+ bool mOverwrite;
+ bool mReadOnly;
+ bool mWithinRender;
+ bool mScrollToCursor;
+ bool mScrollToTop;
+ bool mTextChanged;
+ bool mColorizerEnabled;
+ float mTextStart;
+ int mLeftMargin;
+ bool mCursorPositionChanged;
+ int mColorRangeMin, mColorRangeMax;
+ SelectionMode mSelectionMode;
+ bool mHandleKeyboardInputs;
+ bool mHandleMouseInputs;
+ bool mIgnoreImGuiChild;
+ bool mShowWhitespaces;
+ Palette mPaletteBase;
+ Palette mPalette;
+ LanguageDefinition mLanguageDefinition;
+ RegexList mRegexList;
+ bool mCheckComments;
+ Breakpoints mBreakpoints;
+ ErrorMarkers mErrorMarkers;
+ ImVec2 mCharAdvance;
+ Coordinates mInteractiveStart, mInteractiveEnd;
+ std::string mLineBuffer;
+ uint64_t mStartTime;
+ float mLastClick;
+};
