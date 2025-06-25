@@ -799,8 +799,13 @@ local function parseFunction(self,stname,itt,namespace,locat)
 			else
 				ar1,defa = ar:match"([^=]+)=([^=]+)"
 				ar1 = ar1 or ar
-				typ,name = ar1:match("(.+)%s([^%s]+)")
+				--typ,name = ar1:match("(.+)%s([^%s]+)")
+				typ,ptr,name = ar1:match("(.+)%s(%*?)([^%s]+)")
+                                print(ptr)
 			end
+                        print(">>")
+                        print("Type: ",typ, "Name:",name, "AR:",ar)
+                        print("<<")
 			if not typ or not name or name:match"%*" or M.c_types[name]  or self.typedefs_dict[name] then
 				print("argument without name",funcname,typ,name,ar)
 				ar1,defa = ar:match"([^=]+)=([^=]+)"

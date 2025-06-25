@@ -143,9 +143,9 @@ CIMGUI_API void Mode_destroy(Mode* self)
 {
     IM_DELETE(self);
 }
-CIMGUI_API bool ImSpinner::detail_SpinnerBegin(const char* label,float radius,ImVec2 *pos noname1,ImVec2 *size noname2,ImVec2 *centre noname3,int *num_segments noname4)
+CIMGUI_API bool ImSpinner::detail_SpinnerBegin(const char* label,float radius,ImVec2 pos,ImVec2 size,ImVec2 centre,int num_segments)
 {
-    return ImSpinner::detail::SpinnerBegin(label,radius,*noname1,*noname2,*noname3,*noname4);
+    return ImSpinner::detail::SpinnerBegin(label,radius,*pos,*size,*centre,*num_segments);
 }
 CIMGUI_API SpinnerConfig* SpinnerConfig_SpinnerConfig(void)
 {
@@ -507,9 +507,9 @@ CIMGUI_API void ImSpinner_SpinnerFilling(const char* label,float radius,float th
 {
     return ImSpinner::SpinnerFilling(label,radius,thickness,color1,color2,speed);
 }
-CIMGUI_API void ImSpinner_SpinnerFillingMem(const char* label,float radius,float thickness,const ImColor color,ImColor *colorbg noname1,float speed)
+CIMGUI_API void ImSpinner_SpinnerFillingMem(const char* label,float radius,float thickness,const ImColor color,ImColor colorbg,float speed)
 {
-    return ImSpinner::SpinnerFillingMem(label,radius,thickness,color,*noname1,speed);
+    return ImSpinner::SpinnerFillingMem(label,radius,thickness,color,*colorbg,speed);
 }
 CIMGUI_API void ImSpinner_SpinnerTopup(const char* label,float radius1,float radius2,const ImColor color,const ImColor fg,const ImColor bg,float speed)
 {

@@ -370,7 +370,7 @@
   ],
   "ImSpinner::detail_SpinnerBegin": [
     {
-      "args": "(const char* label,float radius,ImVec2 *pos noname1,ImVec2 *size noname2,ImVec2 *centre noname3,int *num_segments noname4)",
+      "args": "(const char* label,float radius,ImVec2 pos,ImVec2 size,ImVec2 centre,int num_segments)",
       "argsT": [
         {
           "name": "label",
@@ -381,28 +381,28 @@
           "type": "float"
         },
         {
-          "name": "noname1",
+          "name": "pos",
           "reftoptr": true,
-          "type": "ImVec2 *pos"
+          "type": "ImVec2"
         },
         {
-          "name": "noname2",
+          "name": "size",
           "reftoptr": true,
-          "type": "ImVec2 *size"
+          "type": "ImVec2"
         },
         {
-          "name": "noname3",
+          "name": "centre",
           "reftoptr": true,
-          "type": "ImVec2 *centre"
+          "type": "ImVec2"
         },
         {
-          "name": "noname4",
+          "name": "num_segments",
           "reftoptr": true,
-          "type": "int *num_segments"
+          "type": "int"
         }
       ],
       "argsoriginal": "(const char* label,float radius,ImVec2 &pos,ImVec2 &size,ImVec2 &centre,int &num_segments)",
-      "call_args": "(label,radius,*noname1,*noname2,*noname3,*noname4)",
+      "call_args": "(label,radius,*pos,*size,*centre,*num_segments)",
       "cimguiname": "ImSpinner::detail_SpinnerBegin",
       "defaults": {},
       "funcname": "SpinnerBegin",
@@ -410,7 +410,7 @@
       "namespace": "ImSpinner::detail",
       "ov_cimguiname": "ImSpinner::detail_SpinnerBegin",
       "ret": "bool",
-      "signature": "(const char*,float,ImVec2 *pos,ImVec2 *size,ImVec2 *centre,int *num_segments)",
+      "signature": "(const char*,float,ImVec2,ImVec2,ImVec2,int)",
       "stname": ""
     }
   ],
@@ -2723,7 +2723,7 @@
   ],
   "ImSpinner_SpinnerFillingMem": [
     {
-      "args": "(const char* label,float radius,float thickness,const ImColor color,ImColor *colorbg noname1,float speed)",
+      "args": "(const char* label,float radius,float thickness,const ImColor color,ImColor colorbg,float speed)",
       "argsT": [
         {
           "name": "label",
@@ -2742,9 +2742,9 @@
           "type": "const ImColor"
         },
         {
-          "name": "noname1",
+          "name": "colorbg",
           "reftoptr": true,
-          "type": "ImColor *colorbg"
+          "type": "ImColor"
         },
         {
           "name": "speed",
@@ -2752,7 +2752,7 @@
         }
       ],
       "argsoriginal": "(const char* label,float radius,float thickness,const ImColor &color,ImColor &colorbg,float speed)",
-      "call_args": "(label,radius,thickness,color,*noname1,speed)",
+      "call_args": "(label,radius,thickness,color,*colorbg,speed)",
       "cimguiname": "ImSpinner_SpinnerFillingMem",
       "defaults": {},
       "funcname": "SpinnerFillingMem",
@@ -2760,7 +2760,7 @@
       "namespace": "ImSpinner",
       "ov_cimguiname": "ImSpinner_SpinnerFillingMem",
       "ret": "void",
-      "signature": "(const char*,float,float,const ImColor,ImColor *colorbg,float)",
+      "signature": "(const char*,float,float,const ImColor,ImColor,float)",
       "stname": ""
     }
   ],

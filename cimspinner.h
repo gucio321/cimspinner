@@ -197,7 +197,7 @@ CIMGUI_API Delta* Delta_Delta(const float v);
 CIMGUI_API void Delta_destroy(Delta* self);
 CIMGUI_API Mode* Mode_Mode(const int v);
 CIMGUI_API void Mode_destroy(Mode* self);
-CIMGUI_API bool ImSpinner::detail_SpinnerBegin(const char* label,float radius,ImVec2 *pos noname1,ImVec2 *size noname2,ImVec2 *centre noname3,int *num_segments noname4);
+CIMGUI_API bool ImSpinner::detail_SpinnerBegin(const char* label,float radius,ImVec2 pos,ImVec2 size,ImVec2 centre,int num_segments);
 CIMGUI_API SpinnerConfig* SpinnerConfig_SpinnerConfig(void);
 CIMGUI_API void SpinnerConfig_destroy(SpinnerConfig* self);
 CIMGUI_API void SpinnerConfig_setSpinnerType(SpinnerConfig* self,const SpinnerTypeT v);
@@ -288,7 +288,7 @@ CIMGUI_API void ImSpinner_SpinnerOrionDots(const char* label,float radius,float 
 CIMGUI_API void ImSpinner_SpinnerGalaxyDots(const char* label,float radius,float thickness,const ImColor color,float speed,int arcs);
 CIMGUI_API void ImSpinner_SpinnerTwinAng(const char* label,float radius1,float radius2,float thickness,const ImColor color1,const ImColor color2,float speed,float angle,int mode);
 CIMGUI_API void ImSpinner_SpinnerFilling(const char* label,float radius,float thickness,const ImColor color1,const ImColor color2,float speed);
-CIMGUI_API void ImSpinner_SpinnerFillingMem(const char* label,float radius,float thickness,const ImColor color,ImColor *colorbg noname1,float speed);
+CIMGUI_API void ImSpinner_SpinnerFillingMem(const char* label,float radius,float thickness,const ImColor color,ImColor colorbg,float speed);
 CIMGUI_API void ImSpinner_SpinnerTopup(const char* label,float radius1,float radius2,const ImColor color,const ImColor fg,const ImColor bg,float speed);
 CIMGUI_API void ImSpinner_SpinnerTwinAng180(const char* label,float radius1,float radius2,float thickness,const ImColor color1,const ImColor color2,float speed,float angle,int mode);
 CIMGUI_API void ImSpinner_SpinnerTwinAng360(const char* label,float radius1,float radius2,float thickness,const ImColor color1,const ImColor color2,float speed1,float speed2,int mode);
